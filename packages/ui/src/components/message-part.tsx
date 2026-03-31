@@ -1364,16 +1364,17 @@ PART_MAPPING["tool"] = function ToolPartDisplay(props) {
     const value = partMetadata().sessionId
     if (typeof value === "string" && value) return value
   })
-  const taskHref = createMemo(() => {
-    if (part().tool !== "task") return
-    return sessionLink(taskId(), useLocation().pathname, data.sessionHref)
-  })
   const taskSubtitle = createMemo(() => {
     if (part().tool !== "task") return undefined
     const value = input().description
     if (typeof value === "string" && value) return value
     return taskId()
   })
+  const taskJump = () => {
+    const id = taskId()
+    if (!id) return
+    data.navigateToSession?.(id)
+  }
 
   const render = createMemo(() => ToolRegistry.render(part().tool) ?? GenericTool)
 
@@ -1400,7 +1401,7 @@ PART_MAPPING["tool"] = function ToolPartDisplay(props) {
                   title={part().tool === "websearch" ? webSearchProviderLabel(partMetadata().provider) : undefined}
                   defaultOpen={props.defaultOpen}
                   subtitle={taskSubtitle()}
-                  href={taskHref()}
+                  onNavigate={taskJump}
                 />
               )
             }}

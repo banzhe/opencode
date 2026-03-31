@@ -13,7 +13,7 @@ export interface ToolErrorCardProps extends Omit<ComponentProps<typeof Card>, "c
   title?: string
   defaultOpen?: boolean
   subtitle?: string
-  href?: string
+  onNavigate?: () => void
 }
 
 export function ToolErrorCard(props: ToolErrorCardProps) {
@@ -24,7 +24,7 @@ export function ToolErrorCard(props: ToolErrorCardProps) {
   })
   const open = () => state.open
   const copied = () => state.copied
-  const [split, rest] = splitProps(props, ["tool", "error", "title", "defaultOpen", "subtitle", "href"])
+  const [split, rest] = splitProps(props, ["tool", "error", "title", "defaultOpen", "subtitle", "onNavigate"])
   const name = createMemo(() => {
     if (split.title) return split.title
     const map: Record<string, string> = {
@@ -94,17 +94,27 @@ export function ToolErrorCard(props: ToolErrorCardProps) {
                   <div data-slot="basic-tool-tool-info-main">
                     <span data-slot="basic-tool-tool-title">{name()}</span>
                     <Show
-                      when={split.href && split.subtitle}
+                      when={split.onNavigate && split.subtitle}
                       fallback={<span data-slot="basic-tool-tool-subtitle">{subtitle()}</span>}
                     >
-                      <a
+                      <span
                         data-slot="basic-tool-tool-subtitle"
                         class="clickable subagent-link"
-                        href={split.href!}
-                        onClick={(e) => e.stopPropagation()}
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          split.onNavigate?.()
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key !== "Enter" && e.key !== " ") return
+                          e.preventDefault()
+                          e.stopPropagation()
+                          split.onNavigate?.()
+                        }}
                       >
                         {subtitle()}
-                      </a>
+                      </span>
                     </Show>
                   </div>
                 </div>
