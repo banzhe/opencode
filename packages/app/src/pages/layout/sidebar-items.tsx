@@ -37,6 +37,22 @@ export const ProjectIcon = (props: {
       return hasProjectPermissions(store.permission, (item) => !permission.autoResponds(item, directory))
     }),
   )
+  const busy = createMemo(() =>
+    dirs().some((directory) => {
+      const [store] = globalSync.child(directory, { bootstrap: false })
+      return (store.session ?? []).some((session) => {
+        if (session.time.archived !== undefined) return false
+        const status = store.session_status[session.id]
+        if (!status) return false
+        if (status.type !== "idle") return true
+        return (store.message[session.id] ?? []).some(
+          (message) =>
+            message.role === "assistant" &&
+            typeof (message as { time?: { completed?: unknown } }).time?.completed !== "number",
+        )
+      })
+    }),
+  )
   const notify = createMemo(() => props.notify && (hasPermissions() || unseenCount() > 0))
   const name = createMemo(() => props.project.name || getFilename(props.project.worktree))
 
@@ -61,7 +77,7 @@ export const ProjectIcon = (props: {
           }}
         />
       </Show>
-      <Show when={props.working}>
+      <Show when={props.working || busy()}>
         <div class="absolute bottom-px right-px size-3 rounded-full bg-background-base z-10 flex items-center justify-center">
           <Spinner class="size-[9px]" />
         </div>
