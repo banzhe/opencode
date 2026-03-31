@@ -5,7 +5,7 @@ import { IconButton } from "@opencode-ai/ui/icon-button"
 import { Spinner } from "@opencode-ai/ui/spinner"
 import { Tooltip } from "@opencode-ai/ui/tooltip"
 import { getFilename } from "@opencode-ai/core/util/path"
-import { A, useParams } from "@solidjs/router"
+import { useNavigate, useParams } from "@solidjs/router"
 import { type Accessor, createMemo, For, type JSX, Match, Show, Switch } from "solid-js"
 import { useGlobalSync } from "@/context/global-sync"
 import { useLanguage } from "@/context/language"
@@ -96,23 +96,33 @@ const SessionRow = (props: {
   hasPermissions: Accessor<boolean>
   hasError: Accessor<boolean>
   unseenCount: Accessor<number>
+  isActive: Accessor<boolean>
+  navigate: ReturnType<typeof useNavigate>
   clearHoverProjectSoon: () => void
   sidebarOpened: Accessor<boolean>
   warmPress: () => void
   warmFocus: () => void
 }): JSX.Element => {
   const title = () => sessionTitle(props.session.title)
-
+  const href = `/${props.slug}/session/${props.session.id}`
+  const handleClick = () => {
+    if (!props.sidebarOpened()) props.clearHoverProjectSoon()
+    props.navigate(href)
+  }
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.key !== "Enter" && e.key !== " ") return
+    e.preventDefault()
+    handleClick()
+  }
   return (
-    <A
-      href={`/${props.slug}/session/${props.session.id}`}
-      class={`flex items-center gap-2 min-w-0 w-full text-left focus:outline-none ${props.dense ? "py-0.5" : "py-1"}`}
+    <div
+      role="button"
+      tabIndex={0}
+      class={`flex items-center gap-2 min-w-0 w-full text-left focus:outline-none ${props.dense ? "py-0.5" : "py-1"} ${props.isActive() ? "active" : ""}`}
       onPointerDown={props.warmPress}
       onFocus={props.warmFocus}
-      onClick={() => {
-        if (props.sidebarOpened()) return
-        props.clearHoverProjectSoon()
-      }}
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
     >
       <Show when={props.isWorking() || props.hasPermissions() || props.hasError() || props.unseenCount() > 0}>
         <div
@@ -136,12 +146,13 @@ const SessionRow = (props: {
         </div>
       </Show>
       <span class="text-14-regular text-text-strong min-w-0 flex-1 truncate">{title()}</span>
-    </A>
+    </div>
   )
 }
 
 export const SessionItem = (props: SessionItemProps): JSX.Element => {
   const params = useParams()
+  const navigate = useNavigate()
   const layout = useLayout()
   const language = useLanguage()
   const notification = useNotification()
@@ -159,6 +170,7 @@ export const SessionItem = (props: SessionItemProps): JSX.Element => {
     if (hasPermissions()) return false
     return sessionStore.session_working(props.session.id)
   })
+  const isActive = createMemo(() => props.session.id === params.id)
 
   const tint = createMemo(() => messageAgentColor(sessionStore.message[props.session.id], sessionStore.agent))
   const tooltip = createMemo(() => props.showTooltip ?? (props.mobile || !props.sidebarExpanded()))
@@ -198,6 +210,8 @@ export const SessionItem = (props: SessionItemProps): JSX.Element => {
       hasPermissions={hasPermissions}
       hasError={hasError}
       unseenCount={unseenCount}
+      isActive={isActive}
+      navigate={navigate}
       clearHoverProjectSoon={props.clearHoverProjectSoon}
       sidebarOpened={layout.sidebar.opened}
       warmPress={() => warm(2, "high")}
@@ -276,25 +290,33 @@ export const NewSessionItem = (props: {
   sidebarExpanded: Accessor<boolean>
   clearHoverProjectSoon: () => void
 }): JSX.Element => {
+  const navigate = useNavigate()
   const layout = useLayout()
   const language = useLanguage()
   const label = language.t("command.session.new")
   const tooltip = () => props.mobile || !props.sidebarExpanded()
+  const handleClick = () => {
+    if (!layout.sidebar.opened()) props.clearHoverProjectSoon()
+    navigate(`/${props.slug}/session`)
+  }
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.key !== "Enter" && e.key !== " ") return
+    e.preventDefault()
+    handleClick()
+  }
   const item = (
-    <A
-      href={`/${props.slug}/session`}
-      end
+    <div
+      role="button"
+      tabIndex={0}
       class={`flex items-center gap-2 min-w-0 w-full text-left focus:outline-none ${props.dense ? "py-0.5" : "py-1"}`}
-      onClick={() => {
-        if (layout.sidebar.opened()) return
-        props.clearHoverProjectSoon()
-      }}
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
     >
       <div class="shrink-0 size-6 flex items-center justify-center">
         <Icon name="new-session" size="small" class="text-icon-weak" />
       </div>
       <span class="text-14-regular text-text-strong min-w-0 flex-1 truncate">{label}</span>
-    </A>
+    </div>
   )
 
   return (
