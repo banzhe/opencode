@@ -1,10 +1,12 @@
 import { useMarked } from "../context/marked"
 import { useI18n } from "../context/i18n"
+import { useWorkspace } from "../context/workspace"
 import DOMPurify from "dompurify"
 import morphdom from "morphdom"
 import { checksum } from "@opencode-ai/core/util/encode"
 import { ComponentProps, createEffect, createResource, createSignal, onCleanup, splitProps } from "solid-js"
 import { isServer } from "solid-js/web"
+import { codeUrl, markCodeFileLinks } from "./markdown-links"
 import { stream } from "./markdown-stream"
 
 type Entry = {
@@ -63,19 +65,6 @@ function fallback(markdown: string) {
 type CopyLabels = {
   copy: string
   copied: string
-}
-
-const urlPattern = /^https?:\/\/[^\s<>()`"']+$/
-
-function codeUrl(text: string) {
-  const href = text.trim().replace(/[),.;!?]+$/, "")
-  if (!urlPattern.test(href)) return
-  try {
-    const url = new URL(href)
-    return url.toString()
-  } catch {
-    return
-  }
 }
 
 function createIcon(path: string, slot: string) {
@@ -175,12 +164,13 @@ function markCodeLinks(root: HTMLDivElement) {
   }
 }
 
-function decorate(root: HTMLDivElement, labels: CopyLabels) {
+function decorate(root: HTMLDivElement, labels: CopyLabels, workspace?: string) {
   const blocks = Array.from(root.querySelectorAll("pre"))
   for (const block of blocks) {
     ensureCodeWrapper(block, labels)
   }
   markCodeLinks(root)
+  markCodeFileLinks(root, workspace)
 }
 
 function setupCodeCopy(root: HTMLDivElement, getLabels: () => CopyLabels) {
@@ -250,6 +240,7 @@ export function Markdown(
   const [local, others] = splitProps(props, ["text", "cacheKey", "streaming", "class", "classList"])
   const marked = useMarked()
   const i18n = useI18n()
+  const workspace = useWorkspace()
   const [root, setRoot] = createSignal<HTMLDivElement>()
   const [html] = createResource(
     () => ({
@@ -306,7 +297,7 @@ export function Markdown(
     }
     const temp = document.createElement("div")
     temp.innerHTML = content
-    decorate(temp, labels)
+    decorate(temp, labels, workspace)
 
     morphdom(container, temp, {
       childrenOnly: true,

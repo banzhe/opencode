@@ -152,8 +152,16 @@ export function registerIpcHandlers(deps: Deps) {
     void shell.openExternal(url)
   })
 
-  ipcMain.handle("open-path", async (_event: IpcMainInvokeEvent, path: string, app?: string) => {
+  ipcMain.handle("open-path", async (_event: IpcMainInvokeEvent, path: string, app?: string, line?: number) => {
     if (!app) return shell.openPath(path)
+    if (line) {
+      const resolvedApp = process.platform === "darwin" ? await deps.resolveAppPath(app).catch(() => app) : app
+      const execPath = resolvedApp || app
+      await new Promise<void>((resolve, reject) => {
+        execFile(execPath, ["--goto", `${path}:${line}`], (err) => (err ? reject(err) : resolve()))
+      })
+      return
+    }
     await new Promise<void>((resolve, reject) => {
       const [cmd, args] =
         process.platform === "darwin" ? (["open", ["-a", app, path]] as const) : ([app, [path]] as const)

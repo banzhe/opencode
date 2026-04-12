@@ -179,7 +179,7 @@ const createPlatform = (): Platform => {
     openLink(url: string) {
       window.api.openLink(url)
     },
-    async openPath(path: string, app?: string) {
+    async openPath(path: string, app?: string, line?: number) {
       if (os === "windows") {
         const resolvedApp = app ? await window.api.resolveAppPath(app).catch(() => null) : null
         const resolvedPath = await (async () => {
@@ -189,9 +189,9 @@ const createPlatform = (): Platform => {
           }
           return path
         })()
-        return window.api.openPath(resolvedPath, resolvedApp ?? undefined)
+        return window.api.openPath(resolvedPath, resolvedApp ?? undefined, line)
       }
-      return window.api.openPath(path, app)
+      return window.api.openPath(path, app, line)
     },
 
     back() {
@@ -346,10 +346,35 @@ render(() => {
 
   function handleClick(e: MouseEvent) {
     const link = (e.target as HTMLElement).closest("a.external-link") as HTMLAnchorElement | null
-    if (link?.href) {
-      e.preventDefault()
-      platform.openLink(link.href)
+    if (!link?.href) return
+    e.preventDefault()
+    if (handleFileLinkClick(link.href)) {
+      return
     }
+
+    platform.openLink(link.href)
+  }
+
+  function handleFileLinkClick(href: string): boolean {
+    if (!href.startsWith("file://")) {
+      return false
+    }
+
+    let filePath = decodeURIComponent(href.slice("file://".length))
+    const queryIdx = filePath.indexOf("?")
+    let line: number | undefined
+    if (queryIdx !== -1) {
+      const qs = new URLSearchParams(filePath.slice(queryIdx + 1))
+      filePath = filePath.slice(0, queryIdx)
+      const l = qs.get("line")
+      if (l) line = parseInt(l, 10)
+    }
+    if (/^\/[A-Za-z]:/.test(filePath)) {
+      filePath = filePath.slice(1)
+    }
+    if (platform.openPath) void platform.openPath(filePath, "code", line)
+
+    return true;
   }
 
   function Inner() {

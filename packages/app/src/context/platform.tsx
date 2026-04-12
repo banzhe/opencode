@@ -34,7 +34,7 @@ export type Platform = {
   openLink(url: string): void
 
   /** Open a local path in a local app (desktop only) */
-  openPath?(path: string, app?: string): Promise<void>
+  openPath?(path: string, app?: string, line?: number): Promise<void>
 
   /** Restart the app  */
   restart(): Promise<void>

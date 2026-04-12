@@ -1,4 +1,5 @@
 import { DataProvider } from "@opencode-ai/ui/context"
+import { WorkspaceProvider } from "@opencode-ai/ui/context/workspace"
 import { showToast } from "@opencode-ai/ui/toast"
 import { base64Encode } from "@opencode-ai/core/util/encode"
 import { useLocation, useNavigate, useParams } from "@solidjs/router"
@@ -30,14 +31,16 @@ function DirectoryDataProvider(props: ParentProps<{ directory: string }>) {
   )
 
   return (
-    <DataProvider
-      data={sync.data}
-      directory={props.directory}
-      onNavigateToSession={(sessionID: string) => navigate(`/${slug()}/session/${sessionID}`)}
-      onSessionHref={(sessionID: string) => `/${slug()}/session/${sessionID}`}
-    >
-      <LocalProvider>{props.children}</LocalProvider>
-    </DataProvider>
+    <WorkspaceProvider value={props.directory}>
+      <DataProvider
+        data={sync.data}
+        directory={props.directory}
+        onNavigateToSession={(sessionID: string) => navigate(`/${slug()}/session/${sessionID}`)}
+        onSessionHref={(sessionID: string) => `/${slug()}/session/${sessionID}`}
+      >
+        <LocalProvider>{props.children}</LocalProvider>
+      </DataProvider>
+    </WorkspaceProvider>
   )
 }
 
