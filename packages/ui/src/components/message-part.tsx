@@ -1370,6 +1370,11 @@ PART_MAPPING["tool"] = function ToolPartDisplay(props) {
     if (typeof value === "string" && value) return value
     return taskId()
   })
+  const bashSubtitle = createMemo(() => {
+    if (part().tool !== "bash") return undefined
+    const value = input().command
+    if (typeof value === "string" && value) return value
+  })
   const taskJump = () => {
     const id = taskId()
     if (!id) return
@@ -1400,7 +1405,7 @@ PART_MAPPING["tool"] = function ToolPartDisplay(props) {
                   error={error()}
                   title={part().tool === "websearch" ? webSearchProviderLabel(partMetadata().provider) : undefined}
                   defaultOpen={props.defaultOpen}
-                  subtitle={taskSubtitle()}
+                  subtitle={bashSubtitle() ?? taskSubtitle()}
                   onNavigate={taskJump}
                 />
               )
@@ -1878,7 +1883,7 @@ ToolRegistry.register({
               <span data-slot="basic-tool-tool-title">
                 <TextShimmer text={i18n.t("ui.tool.shell")} active={pending()} />
               </span>
-              <Show when={!pending() && props.input.description}>
+              <Show when={props.input.description}>
                 <ShellSubmessage text={props.input.description} animate={sawPending} />
               </Show>
             </div>
