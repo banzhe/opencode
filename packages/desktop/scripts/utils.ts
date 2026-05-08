@@ -43,7 +43,7 @@ export const SIDECAR_BINARIES: Array<{ rustTarget: string; ocBinary: string; ass
 
 export const RUST_TARGET = Bun.env.RUST_TARGET
 
-function nativeTarget() {
+export function nativeTarget() {
   const { platform, arch } = process
   if (platform === "darwin") return arch === "arm64" ? "aarch64-apple-darwin" : "x86_64-apple-darwin"
   if (platform === "win32") return arch === "arm64" ? "aarch64-pc-windows-msvc" : "x86_64-pc-windows-msvc"
