@@ -319,13 +319,11 @@ export const { use: useLocal, provider: LocalProvider } = createSimpleContext({
             selected: this.selected(),
             configured: this.configured(),
           })
-          if (resolved !== undefined) return resolved
-          if (this.selected() !== undefined) return undefined
+          if (resolved) return resolved
           const model = current()
           if (!model) return
           const saved = models.variant.get({ providerID: model.provider.id, modelID: model.id })
           if (saved && this.list().includes(saved)) return saved
-          return this.list().find((v) => v.toLowerCase() === "high")
         },
         list() {
           const item = current()
