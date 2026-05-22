@@ -345,12 +345,17 @@ render(() => {
   }
 
   function handleClick(e: MouseEvent) {
-    const link = (e.target as HTMLElement).closest("a.external-link") as HTMLAnchorElement | null
+    const link = (e.target as HTMLElement).closest("a") as HTMLAnchorElement | null
     if (!link?.href) return
+
+    const isExternal =
+      link.classList.contains("external-link") ||
+      (link.target === "_blank" && /^https?:\/\//.test(link.href))
+
+    if (!isExternal) return
+
     e.preventDefault()
-    if (handleFileLinkClick(link.href)) {
-      return
-    }
+    if (handleFileLinkClick(link.href)) return
 
     platform.openLink(link.href)
   }
@@ -396,9 +401,9 @@ render(() => {
   }
 
   onMount(() => {
-    document.addEventListener("click", handleClick)
+    document.addEventListener("click", handleClick, true)
     onCleanup(() => {
-      document.removeEventListener("click", handleClick)
+      document.removeEventListener("click", handleClick, true)
     })
   })
 
