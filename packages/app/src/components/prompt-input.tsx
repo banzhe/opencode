@@ -1201,6 +1201,26 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
       return
     }
 
+    // Ctrl+Enter always queues the message (bypasses global followup setting)
+    if (event.key === "Enter" && event.ctrlKey && !event.shiftKey && !event.metaKey && !event.altKey) {
+      event.preventDefault()
+      if (event.repeat) return
+      if (
+        working() &&
+        prompt
+          .current()
+          .map((part) => ("content" in part ? part.content : ""))
+          .join("")
+          .trim().length === 0 &&
+        imageAttachments().length === 0 &&
+        commentCount() === 0
+      ) {
+        return
+      }
+      void handleSubmit(event, { force: "queue" })
+      return
+    }
+
     if (event.key === "Enter" && isImeComposing(event)) {
       return
     }
@@ -1276,7 +1296,7 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
       ) {
         return
       }
-      void handleSubmit(event)
+      void handleSubmit(event, { force: "steer" })
     }
   }
 

@@ -286,7 +286,7 @@ export function createPromptSubmit(input: PromptSubmitInput) {
     })
   }
 
-  const handleSubmit = async (event: Event) => {
+  const handleSubmit = async (event: Event, opts?: { force?: "steer" | "queue" }) => {
     event.preventDefault()
 
     const currentPrompt = prompt.current()
@@ -424,7 +424,10 @@ export function createPromptSubmit(input: PromptSubmitInput) {
       })
     }
 
-    if (!isNewSession && mode === "normal" && input.shouldQueue?.()) {
+    const shouldQueue =
+      opts?.force === "steer" ? false : opts?.force === "queue" ? true : input.shouldQueue?.()
+
+    if (!isNewSession && mode === "normal" && shouldQueue) {
       input.onQueue?.(draft)
       clearContext()
       clearInput()
