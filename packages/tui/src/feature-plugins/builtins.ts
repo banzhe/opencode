@@ -36,10 +36,7 @@ export function createBuiltinPlugins(): BuiltinTuiPlugin[] {
   ]
 }
 
-export async function loadBuiltinPlugins(
-  api: TuiPluginApi,
-  runtime: PluginRuntime,
-) {
+export async function loadBuiltinPlugins(api: TuiPluginApi, runtime: PluginRuntime) {
   const slots = runtime.setupSlots(api)
   const dispose: Array<() => void> = []
 
